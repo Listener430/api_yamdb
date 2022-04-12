@@ -46,10 +46,12 @@ class Title(models.Model):
 
 class GenresTitle(models.Model):
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
-    genres = models.ForeignKey(Genre, on_delete=models.PROTECT)
+    genre = models.ForeignKey(
+        Genre, blank=True, null=True, on_delete=models.PROTECT
+    )
 
     def __str__(self):
-        return f"{self.genres} {self.title}"
+        return f"{self.genre} {self.title}"
 
 
 class Review(models.Model):
