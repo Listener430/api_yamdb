@@ -22,6 +22,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "users.apps.UsersConfig",
+    "rest_framework",
+    "django_filters",
+    "djoser",
+    "api",
+    "reviews",
 ]
 
 MIDDLEWARE = [
