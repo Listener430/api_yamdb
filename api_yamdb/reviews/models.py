@@ -3,9 +3,9 @@ from django.db import models
 from users.models import User
 
 
-class Categories(models.Model):
+class Category(models.Model):
 
-    title = models.CharField(max_length=40)
+    name = models.CharField(max_length=40)
     slug = models.SlugField(unique=True)
 
     def __str__(self):
@@ -13,9 +13,9 @@ class Categories(models.Model):
         return self.title
 
 
-class Genres(models.Model):
+class Genre(models.Model):
 
-    title = models.CharField(max_length=40)
+    name = models.CharField(max_length=40)
     slug = models.SlugField(unique=True)
 
     def __str__(self):
@@ -24,9 +24,13 @@ class Genres(models.Model):
 
 
 class Title(models.Model):
-    text = models.TextField()
-    categories = models.ForeignKey(
-        Categories,
+    name = models.TextField()
+    year = models.IntegerField(blank=True, null=True)
+    genre = models.ManyToManyField(
+        Genre, through="GenresTitle", related_name="titles"
+    )
+    category = models.ForeignKey(
+        Category,
         blank=True,
         null=True,
         related_name="titles",
@@ -34,44 +38,42 @@ class Title(models.Model):
         help_text="Категория, к которой будет относиться произведение",
         on_delete=models.CASCADE,
     )
-    genres = models.ManyToManyField(
-        Genres, through="GenresTitle", related_name="titles"
-    )
+    description = models.TextField(blank=True)
 
     def __str__(self):
         return self.text
 
 
 class GenresTitle(models.Model):
-    genres = models.ForeignKey(Genres, on_delete=models.PROTECT)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
+    genres = models.ForeignKey(Genre, on_delete=models.PROTECT)
 
     def __str__(self):
         return f"{self.genres} {self.title}"
 
 
 class Review(models.Model):
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="reviews"
-    )
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name="reviews"
     )
     text = models.TextField()
-    created = models.DateTimeField(
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="reviews"
+    )
+    score = models.IntegerField(choices=[(i, i) for i in range(10)])
+    pub_date = models.DateTimeField(
         "Дата добавления", auto_now_add=True, db_index=True
     )
-    rating = models.IntegerField()
 
 
 class Comment(models.Model):
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="comments"
-    )
     review = models.ForeignKey(
         Review, on_delete=models.CASCADE, related_name="comments"
     )
     text = models.TextField()
-    created = models.DateTimeField(
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="comments"
+    )
+    pub_date = models.DateTimeField(
         "Дата добавления", auto_now_add=True, db_index=True
     )
