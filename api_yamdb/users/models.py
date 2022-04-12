@@ -3,10 +3,15 @@ from django.db import models
 
 
 class User(AbstractUser):
-    class RoleChoices(models.TextChoices):
-        USER = "user", "user"
-        MODERATOR = "moderator", "moderator"
-        ADMIN = "admin", "admin"
+    class RoleChoices:
+        USER = "user"
+        ADMIN = "admin"
+        MODERATOR = "moderator"
+        choices = [
+            (USER, "user"),
+            (ADMIN, "admin"),
+            (MODERATOR, "moderator"),
+        ]
 
     bio = models.TextField(max_length=500, blank=True)
     email = models.EmailField(unique=True)
