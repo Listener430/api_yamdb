@@ -1,5 +1,7 @@
 from django.db import models
 
+from users.models import User
+
 
 class Categories(models.Model):
 
@@ -29,16 +31,19 @@ class Title(models.Model):
         null=True,
         related_name="titles",
         verbose_name="Категория",
-        help_text="Категория, к которой будет относиться произведени",
+        help_text="Категория, к которой будет относиться произведение",
+        on_delete=models.CASCADE,
     )
-    genres = models.ManyToManyField(Genres, through="GenresTitle")
+    genres = models.ManyToManyField(
+        Genres, through="GenresTitle", related_name="titles"
+    )
 
     def __str__(self):
         return self.text
 
 
 class GenresTitle(models.Model):
-    genres = models.ForeignKey(Genres)
+    genres = models.ForeignKey(Genres, on_delete=models.PROTECT)
     title = models.ForeignKey(Title, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -46,6 +51,9 @@ class GenresTitle(models.Model):
 
 
 class Review(models.Model):
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="reviews"
+    )
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name="reviews"
     )
@@ -53,10 +61,13 @@ class Review(models.Model):
     created = models.DateTimeField(
         "Дата добавления", auto_now_add=True, db_index=True
     )
-    rating = models.IntegerField(choices=[i for i in range(10)])
+    rating = models.IntegerField()
 
 
 class Comment(models.Model):
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="comments"
+    )
     review = models.ForeignKey(
         Review, on_delete=models.CASCADE, related_name="comments"
     )
