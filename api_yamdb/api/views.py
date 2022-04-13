@@ -5,16 +5,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from users.permissions import IsAdminOrReadOnly, IsAdminRole
-from .permissions import IsAuthorOrReadOnly
 
-from users.permissions import IsAdminRole
-from users.serializers import AdminUserSerializer
+from .permissions import IsAuthorOrReadOnly, IsAdminOrReadOnly, IsAdminRole
 from reviews.models import (
     Category,
     Genre,
     Title,
-    GenresTitle,
     Review,
     Comment,
     User,
@@ -26,6 +22,7 @@ from .serializers import (
     ReviewSerializer,
     CommentSerializer,
     UserSerializer,
+    AdminUserSerializer,
 )
 
 
@@ -53,7 +50,10 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthorOrReadOnly,
+    )
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs["title_id"])
@@ -69,7 +69,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly)
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthorOrReadOnly,
+    )
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs["review_id"])
@@ -100,10 +103,16 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def about_me(self, request):
-        serializer = UserSerializer(request.user)
-        if request.method == "PATCH":
-            serializer = UserSerializer(request.user, data=request.data, partial=True)
+        serializer = UserSerializer(
+            request.user, data=request.data, partial=True
+        )
+        if request.user.is_admin or request.user.is_moderator:
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(role="user")
         return Response(serializer.data, status=status.HTTP_200_OK)
