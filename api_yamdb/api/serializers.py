@@ -54,6 +54,7 @@ class TitleSerializer(serializers.ModelSerializer):
         )
 
     def get_rating(self, obj):
+        rating = None
         if Review.objects.filter(title_id=obj.id).exists():
             rating = (
                 Review.objects.filter(title_id=obj.id).aggregate(
@@ -61,8 +62,6 @@ class TitleSerializer(serializers.ModelSerializer):
                 )["sum"]
                 or 0
             ) / Review.objects.filter(title_id=obj.id).count()
-        else:
-            rating = 0
 
         return rating
 
