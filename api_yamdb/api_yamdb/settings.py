@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "users.apps.UsersConfig",
     "rest_framework",
+    "django_filters",
     "api",
     "reviews",
 ]
@@ -87,6 +88,36 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTH_USER_MODEL = "users.User"
+
+AUTHENTICATION_BACKENDS = [
+    "django.core.mail.backends.console.EmailBackend",
+]
+
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+
+ADMIN_EMAIL = "nemykin.eu@yandex.ru"
+
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
+
+REST_AUTH_SERIALIZERS = {
+    "USER_DETAILS_SERIALIZER": "api_users_auth.serializers.CustomUserSerializer",
+}
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_FILTER_BACKENDS": (
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+    ),
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
+}
 
 # Internationalization
 
