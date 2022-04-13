@@ -7,9 +7,11 @@ from .views import (
     ReviewViewSet,
     CommentViewSet,
     TitleViewSet,
+    UserViewSet,
 )
 
 router = routers.DefaultRouter()
+router.register(r"users", UserViewSet)
 router.register(r"categories", CategoryViewSet)
 router.register(r"genres", GenreViewSet)
 router.register(r"titles", TitleViewSet)
