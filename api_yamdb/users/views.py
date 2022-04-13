@@ -1,74 +1,69 @@
-import uuid
-
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 
-from django_filters.rest_framework import DjangoFilterBackend
 
-from rest_framework import viewsets
-from rest_framework.decorators import action, api_view
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets, filters, status
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api_yamdb.settings import ADMIN_EMAIL
 
-from .models import ConfirmationCode, User
-from .permissions import IsAdminRole, IsSuperuser
+from .models import User
 from .serializers import (
-    ConfirmationCodeSerializer,
     UserSerializer,
-    TokenObtainPairSerializer,
+    SignupSerializer,
+    TokenSerializer,
 )
 
 
-class HttpResponseUnauthorized(HttpResponse):
-    def __init__(self):
-        self.status_code = 401
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (
-        IsAdminRole | IsSuperuser,
-        IsAuthenticated,
-    )
-    filter_backends = [
-        DjangoFilterBackend,
-    ]
-    filterset_fields = ("username",)
-    lookup_field = "username"
-
-    @action(
-        detail=False, methods=["GET", "PATCH"], permission_classes=(IsAuthenticated,)
-    )
-    def me(self, request):
-        user = self.request.user
-        serializer = self.get_serializer(user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
-
-
-class TokenObtainPairView(TokenObtainPairView):
-    serializer_class = TokenObtainPairSerializer
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def signup(request):
+    serializer = SignupSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        send_confirmation_code(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(["POST"])
-def get_confirmation_code(request):
-    serializer = ConfirmationCodeSerializer(data=request.data)
-    serializer.is_valid(raise_exception=True)
-    user_email = serializer.validated_data["email"]
-    confirmation_code = str(uuid.uuid4())
-    send_mail(
-        "Your confirmation code",
-        confirmation_code,
-        ADMIN_EMAIL,
-        [user_email],
-        fail_silently=False,
-    )
-    ConfirmationCode.objects.create(
-        email=user_email, confirmation_code=confirmation_code
-    )
-    return HttpResponse("Confirmation code was sent to your email")
+@permission_classes([AllowAny])
+def token(request):
+    serializer = TokenSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    username = serializer.data["username"]
+    user = get_object_or_404(User, username=username)
+    confirmation_code = serializer.data["confirmation_code"]
+    if not default_token_generator.check_token(user, confirmation_code):
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    token = RefreshToken.for_user(user)
+    return Response({"token": str(token.access_token)}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def code(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        username = serializer.data["username"]
+        email = serializer.data["email"]
+        user = get_object_or_404(User, username=username, email=email)
+        send_confirmation_code(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def send_confirmation_code(user):
+    confirmation_code = default_token_generator.make_token(user)
+    subject = "Код подтверждения"
+    message = f"{confirmation_code} - код для авторизации"
+    admin_email = ADMIN_EMAIL
+    user_email = [user.email]
+    return send_mail(subject, message, admin_email, user_email)

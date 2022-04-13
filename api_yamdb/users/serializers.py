@@ -1,40 +1,66 @@
-from rest_framework import serializers, validators
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework import serializers
 
-from .models import ConfirmationCode, User
+from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(
-        required=True,
-        validators=[validators.UniqueValidator(queryset=User.objects.all())],
-    )
+    username = serializers.CharField(required=True)
+    email = serializers.CharField(required=True)
+    role = serializers.StringRelatedField(read_only=True)
 
     class Meta:
-        fields = ["first_name", "last_name", "username", "bio", "email", "role"]
         model = User
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "role",
+        )
+
+    def validate_username(self, value):
+        if value == "me":
+            raise serializers.ValidationError('Имя пользователя "me" не разрешено.')
+        return value
 
 
-class TokenObtainPairSerializer(TokenObtainPairSerializer):
-    username_field = User.email
+class AdminUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "role",
+        )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["password"].required = False
-
-    def validate(self, attrs):
-        password = self.context["request"].data.get("confirmation_code")
-        attrs["password"] = password
-        return super().validate(attrs)
+    def validate_username(self, value):
+        if value == "me":
+            raise serializers.ValidationError('Имя пользователя "me" не разрешено.')
+        return value
 
 
-class ConfirmationCodeSerializer(serializers.Serializer):
-    confirmation_code = serializers.SlugRelatedField(
-        slug_field="confirmation_code", many=False, read_only=True
-    )
-    email = serializers.SlugRelatedField(slug_field="email", many=False, read_only=True)
-    code_date = serializers.DateTimeField()
+class SignupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "email",
+        )
+
+    def validate_username(self, value):
+        if value == "me":
+            raise serializers.ValidationError('Имя пользователя "me" не разрешено.')
+        return value
+
+
+class TokenSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
 
     class Meta:
-        fields = "__all__"
-        model = ConfirmationCode
+        model = User
+        fields = ("username", "confirmation_code")
