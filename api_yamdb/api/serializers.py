@@ -11,6 +11,7 @@ from reviews.models import (
     Comment,
     User,
 )
+from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -45,9 +46,7 @@ class TitleSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
-    )
+    author = serializers.SlugRelatedField(read_only=True, slug_field="username")
 
     class Meta:
         fields = "__all__"
@@ -55,10 +54,22 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
-    )
+    author = serializers.SlugRelatedField(read_only=True, slug_field="username")
 
     class Meta:
         fields = "__all__"
         model = Comment
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = (
+            "username",
+            "pk",
+            "first_name",
+            "last_name",
+            "email",
+            "role",
+            "bio",
+        )
+        model = User

@@ -34,9 +34,3 @@ class User(AbstractUser):
 
     class Meta:
         ordering = ["id"]
-
-
-class ConfirmationCode(models.Model):
-    confirmation_code = models.CharField(max_length=32)
-    email = models.EmailField(max_length=254, unique=True)
-    code_date = models.DateTimeField(auto_now_add=True)
