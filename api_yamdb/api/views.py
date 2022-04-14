@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, filters, status
+from rest_framework import permissions, viewsets, filters, status, mixins
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -33,7 +33,12 @@ from .serializers import (
 )
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (
@@ -41,10 +46,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
         IsAdminOrReadOnly,
     )
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
+    search_fields = ("name", "slug")
+    lookup_field = "slug"
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (
@@ -52,7 +63,8 @@ class GenreViewSet(viewsets.ModelViewSet):
         IsAdminOrReadOnly,
     )
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
+    search_fields = ("slug", "name")
+    lookup_field = "slug"
 
 
 class TitleViewSet(viewsets.ModelViewSet):
