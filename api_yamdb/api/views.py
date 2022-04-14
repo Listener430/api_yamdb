@@ -1,9 +1,10 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, filters, status
+from rest_framework import permissions, viewsets, filters, status, mixins
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django_filters import rest_framework
 
 
 from .permissions import (
@@ -23,7 +24,8 @@ from reviews.models import (
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
-    TitleSerializer,
+    TitleSerializerReadOnly,
+    TitleSerializerWriteOnly,
     ReviewSerializer,
     CommentSerializer,
     UserSerializer,
@@ -31,7 +33,12 @@ from .serializers import (
 )
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (
@@ -39,10 +46,16 @@ class CategoryViewSet(viewsets.ModelViewSet):
         IsAdminOrReadOnly,
     )
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
+    search_fields = ("name", "slug")
+    lookup_field = "slug"
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (
@@ -50,13 +63,37 @@ class GenreViewSet(viewsets.ModelViewSet):
         IsAdminOrReadOnly,
     )
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
+    search_fields = ("slug", "name")
+    lookup_field = "slug"
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    filterset_fields = ["year"]
+
+    def get_queryset(self):
+        queryset = Title.objects.all()
+        genre = self.request.query_params.get("genre", None)
+        if genre is not None:
+            queryset = queryset.filter(genre__slug=genre)
+        category = self.request.query_params.get("category", None)
+        if category is not None:
+            queryset = queryset.filter(category__slug=category)
+        year = self.request.query_params.get("year", None)
+        if year is not None:
+            queryset = queryset.filter(year=year)
+        name = self.request.query_params.get("name", None)
+        if name is not None:
+            queryset = queryset.filter(name__icontains=name)
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action in ["list", "retrieve"]:
+            return TitleSerializerReadOnly
+        if self.action in ["create", "update", "partial_update", "destroy"]:
+            return TitleSerializerWriteOnly
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
