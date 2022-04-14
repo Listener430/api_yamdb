@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework import viewsets, filters, status, mixins
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
@@ -43,6 +44,7 @@ class CategoryViewSet(
 ):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    pagination_class = LimitOffsetPagination
     permission_classes = (
         IsAuthenticatedOrReadOnly,
         IsAdminOrReadOnly,
@@ -60,6 +62,7 @@ class GenreViewSet(
 ):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = LimitOffsetPagination
     permission_classes = (
         IsAuthenticatedOrReadOnly,
         IsAdminOrReadOnly,
@@ -71,6 +74,7 @@ class GenreViewSet(
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
+    pagination_class = LimitOffsetPagination
     permission_classes = (
         IsAuthenticatedOrReadOnly,
         IsAdminOrReadOnly,
@@ -104,6 +108,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (IsAdminModerator,)
+    pagination_class = LimitOffsetPagination
 
     def get_serializer_class(self):
         if self.action == "partial_update":
@@ -125,6 +130,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (IsAdminModerator,)
+    pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs["review_id"])
