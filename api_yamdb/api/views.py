@@ -31,6 +31,7 @@ from .serializers import (
     CommentSerializer,
     UserSerializer,
     AdminUserSerializer,
+    ReviewSerializerPartialUpdate,
 )
 
 
@@ -103,6 +104,11 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (IsAdminModerator,)
+
+    def get_serializer_class(self):
+        if self.action == "partial_update":
+            return ReviewSerializerPartialUpdate
+        return ReviewSerializer
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs["title_id"])

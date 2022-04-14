@@ -85,7 +85,7 @@ class TitleSerializerReadOnly(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
+        read_only=True, slug_field="username", required=False
     )
 
     class Meta:
@@ -98,6 +98,12 @@ class ReviewSerializer(serializers.ModelSerializer):
         if Review.objects.filter(author=author, title_id=title_id).exists():
             raise serializers.ValidationError("Нельзя оставить ревью дважды")
         return data
+
+
+class ReviewSerializerPartialUpdate(serializers.ModelSerializer):
+    class Meta:
+        fields = ("text", "score")
+        model = Review
 
 
 class CommentSerializer(serializers.ModelSerializer):
