@@ -1,14 +1,15 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, filters, status
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated
+
+from rest_framework import viewsets, filters, status, mixins
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django_filters import rest_framework
 
 
 from .permissions import (
-    IsAuthorOrReadOnly,
     IsAdminOrReadOnly,
     IsAdminRole,
     IsAdminModerator,
@@ -33,31 +34,46 @@ from .serializers import (
 )
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthenticatedOrReadOnly,
         IsAdminOrReadOnly,
     )
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
+    search_fields = ("name", "slug")
+    lookup_field = "slug"
 
 
-class GenreViewSet(viewsets.ModelViewSet):
+class GenreViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthenticatedOrReadOnly,
         IsAdminOrReadOnly,
     )
     filter_backends = (filters.SearchFilter,)
-    search_fields = ("name",)
+    search_fields = ("slug", "name")
+    lookup_field = "slug"
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        IsAdminOrReadOnly,
+    )
     filter_backends = (filters.SearchFilter,)
     filterset_fields = ["year"]
 

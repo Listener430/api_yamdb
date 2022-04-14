@@ -10,7 +10,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from api_yamdb.settings import ADMIN_EMAIL
-
 from .models import User
 from .serializers import (
     UserSerializer,
@@ -44,7 +43,9 @@ def token(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     token = RefreshToken.for_user(user)
-    return Response({"token": str(token.access_token)}, status=status.HTTP_200_OK)
+    return Response(
+        {"token": str(token.access_token)}, status=status.HTTP_200_OK
+    )
 
 
 @api_view(["POST"])
