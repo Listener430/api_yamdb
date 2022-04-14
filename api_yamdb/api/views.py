@@ -1,14 +1,15 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, viewsets, filters, status, mixins
-from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.permissions import IsAuthenticated
+
+from rest_framework import viewsets, filters, status, mixins
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django_filters import rest_framework
 
 
 from .permissions import (
-    IsAuthorOrReadOnly,
     IsAdminOrReadOnly,
     IsAdminRole,
     IsAdminModerator,
@@ -42,7 +43,7 @@ class CategoryViewSet(
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthenticatedOrReadOnly,
         IsAdminOrReadOnly,
     )
     filter_backends = (filters.SearchFilter,)
@@ -59,7 +60,7 @@ class GenreViewSet(
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthenticatedOrReadOnly,
         IsAdminOrReadOnly,
     )
     filter_backends = (filters.SearchFilter,)
@@ -69,7 +70,10 @@ class GenreViewSet(
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (
+        IsAuthenticatedOrReadOnly,
+        IsAdminOrReadOnly,
+    )
     filter_backends = (filters.SearchFilter,)
     filterset_fields = ["year"]
 
