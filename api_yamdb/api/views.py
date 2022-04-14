@@ -7,7 +7,12 @@ from rest_framework.response import Response
 from django_filters import rest_framework
 
 
-from .permissions import IsAuthorOrReadOnly, IsAdminOrReadOnly, IsAdminRole
+from .permissions import (
+    IsAuthorOrReadOnly,
+    IsAdminOrReadOnly,
+    IsAdminRole,
+    IsAdminModerator,
+)
 from reviews.models import (
     Category,
     Genre,
@@ -31,7 +36,10 @@ from .serializers import (
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAdminOrReadOnly,
+    )
     filter_backends = (filters.SearchFilter,)
     search_fields = ("name",)
 
@@ -39,7 +47,10 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAdminOrReadOnly,
+    )
     filter_backends = (filters.SearchFilter,)
     search_fields = ("name",)
 
@@ -75,10 +86,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
-        IsAuthorOrReadOnly,
-    )
+    permission_classes = (IsAdminModerator,)
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs["title_id"])
@@ -94,10 +102,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (
-        permissions.IsAuthenticatedOrReadOnly,
-        IsAuthorOrReadOnly,
-    )
+    permission_classes = (IsAdminModerator,)
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs["review_id"])
