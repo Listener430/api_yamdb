@@ -20,11 +20,11 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ("name", "slug")
 
-    validators = [
-        UniqueTogetherValidator(
-            queryset=Category.objects.all(), fields=("name", "slug")
-        )
-    ]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Category.objects.all(), fields=("name", "slug")
+            )
+        ]
 
 
 class GenreSerializer(serializers.ModelSerializer):

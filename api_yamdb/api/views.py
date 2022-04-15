@@ -34,14 +34,10 @@ from .serializers import (
     AdminUserSerializer,
     ReviewSerializerPartialUpdate,
 )
+from .mixins import CustomMixins
 
 
-class CategoryViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
+class CategoryViewSet(CustomMixins):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = LimitOffsetPagination
@@ -54,12 +50,7 @@ class CategoryViewSet(
     lookup_field = "slug"
 
 
-class GenreViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
+class GenreViewSet(CustomMixins):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     pagination_class = LimitOffsetPagination
@@ -161,13 +152,9 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def about_me(self, request):
-        serializer = UserSerializer(
-            request.user, data=request.data, partial=True
-        )
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
         if request.user.is_admin or request.user.is_moderator:
-            serializer = UserSerializer(
-                request.user, data=request.data, partial=True
-            )
+            serializer = UserSerializer(request.user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
