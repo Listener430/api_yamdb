@@ -1,4 +1,7 @@
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+import django_filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import viewsets, filters, status, mixins
 from rest_framework.permissions import (
@@ -33,6 +36,19 @@ from .serializers import (
     AdminUserSerializer,
     ReviewSerializerPartialUpdate,
 )
+
+
+class TitleFilter(django_filters.FilterSet):
+    genre = django_filters.CharFilter(field_name="genre__slug")
+    category = django_filters.CharFilter(field_name="category__slug")
+    year = django_filters.NumberFilter(field_name="year")
+    name = django_filters.CharFilter(
+        field_name="name", lookup_expr="icontains"
+    )
+
+    class Meta:
+        model = Title
+        fields = ["genre", "category", "year", "name"]
 
 
 class CategoryViewSet(
@@ -75,40 +91,22 @@ class TitleViewSet(viewsets.ModelViewSet):
         IsAuthenticatedOrReadOnly,
         IsAdminOrReadOnly,
     )
-    filter_backends = (filters.SearchFilter,)
-    filterset_fields = ["year"]
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = TitleFilter
 
     def get_queryset(self):
-        queryset = Title.objects.all()
-        genre = self.request.query_params.get("genre", None)
-        if genre is not None:
-            queryset = queryset.filter(genre__slug=genre)
-        category = self.request.query_params.get("category", None)
-        if category is not None:
-            queryset = queryset.filter(category__slug=category)
-        year = self.request.query_params.get("year", None)
-        if year is not None:
-            queryset = queryset.filter(year=year)
-        name = self.request.query_params.get("name", None)
-        if name is not None:
-            queryset = queryset.filter(name__icontains=name)
+        queryset = Title.objects.annotate(rating=Avg("reviews__score"))
         return queryset
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
             return TitleSerializerReadOnly
-        if self.action in ["create", "update", "partial_update", "destroy"]:
-            return TitleSerializerWriteOnly
+        return TitleSerializerWriteOnly
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (IsAdminModerator,)
-
-    def get_serializer_class(self):
-        if self.action == "partial_update":
-            return ReviewSerializerPartialUpdate
-        return ReviewSerializer
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs["title_id"])
