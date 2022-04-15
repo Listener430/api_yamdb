@@ -1,9 +1,8 @@
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
 
-from rest_framework import viewsets, filters, status, mixins
+from rest_framework import viewsets, filters, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
     IsAuthenticated,
@@ -35,20 +34,8 @@ from .serializers import (
     UserSerializer,
     AdminUserSerializer,
 )
+from .filters import TitleFilter
 from .mixins import CustomMixins
-
-
-class TitleFilter(django_filters.FilterSet):
-    genre = django_filters.CharFilter(field_name="genre__slug")
-    category = django_filters.CharFilter(field_name="category__slug")
-    year = django_filters.NumberFilter(field_name="year")
-    name = django_filters.CharFilter(
-        field_name="name", lookup_expr="icontains"
-    )
-
-    class Meta:
-        model = Title
-        fields = ["genre", "category", "year", "name"]
 
 
 class CategoryViewSet(CustomMixins):
