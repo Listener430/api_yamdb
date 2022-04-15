@@ -1,4 +1,4 @@
-from django.db.models import Sum
+import datetime as dt
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
@@ -56,7 +56,7 @@ class TitleSerializerWriteOnly(serializers.ModelSerializer):
 class TitleSerializerReadOnly(serializers.ModelSerializer):
     genre = GenreSerializer(required=True, many=True)
     category = CategorySerializer(required=True)
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField()
 
     class Meta:
         model = Title
@@ -70,23 +70,24 @@ class TitleSerializerReadOnly(serializers.ModelSerializer):
             "category",
         )
 
-    def get_rating(self, obj):
-        rating = None
-        if Review.objects.filter(title_id=obj.id).exists():
-            rating = (
-                Review.objects.filter(title_id=obj.id).aggregate(sum=Sum("score"))[
-                    "sum"
-                ]
-                or 0
-            ) / Review.objects.filter(title_id=obj.id).count()
-
-        return rating
-
+    def validate_year(self, value):
+        if value > dt.datetime.now().year:
+            raise serializers.ValidationError("Год больше текущего")
+        return value
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True, slug_field="username", required=False
     )
+    id = serializers.PrimaryKeyRelatedField(
+        required=False, queryset=Review.objects.all()
+    )
+    pub_date = serializers.DateTimeField(required=False)
+    extra_kwargs = {
+        "id": {"required": False},
+        "author": {"required": False},
+        "pub_date": {"required": False},
+    }
 
     class Meta:
         fields = ("id", "text", "author", "score", "pub_date")
@@ -98,6 +99,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         if Review.objects.filter(author=author, title_id=title_id).exists():
             raise serializers.ValidationError("Нельзя оставить ревью дважды")
         return data
+
+    def validate_year(self, value):
+        if value < 1 or value > 10:
+            raise serializers.ValidationError(
+                "Оценка не может быть более 10 и менее 1"
+            )
+        return value
 
 
 class ReviewSerializerPartialUpdate(serializers.ModelSerializer):
