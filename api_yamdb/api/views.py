@@ -23,7 +23,6 @@ from reviews.models import (
     Genre,
     Title,
     Review,
-    Comment,
     User,
 )
 from .serializers import (
@@ -35,9 +34,9 @@ from .serializers import (
     CommentSerializer,
     UserSerializer,
     AdminUserSerializer,
-    ReviewSerializerPartialUpdate,
 )
 from .mixins import CustomMixins
+
 
 class TitleFilter(django_filters.FilterSet):
     genre = django_filters.CharFilter(field_name="genre__slug")
@@ -50,6 +49,7 @@ class TitleFilter(django_filters.FilterSet):
     class Meta:
         model = Title
         fields = ["genre", "category", "year", "name"]
+
 
 class CategoryViewSet(CustomMixins):
     queryset = Category.objects.all()
@@ -104,7 +104,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         title = get_object_or_404(Title, id=self.kwargs["title_id"])
-        queryset = Review.objects.filter(title=title)
+        queryset = title.reviews.all()
         return queryset
 
     def perform_create(self, serializer):
@@ -121,7 +121,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         review = get_object_or_404(Review, id=self.kwargs["review_id"])
-        queryset = Comment.objects.filter(review=review)
+        queryset = review.comments.all()
         return queryset
 
     def perform_create(self, serializer):
@@ -148,9 +148,13 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def about_me(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        serializer = UserSerializer(
+            request.user, data=request.data, partial=True
+        )
         if request.user.is_admin or request.user.is_moderator:
-            serializer = UserSerializer(request.user, data=request.data, partial=True)
+            serializer = UserSerializer(
+                request.user, data=request.data, partial=True
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
