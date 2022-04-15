@@ -20,11 +20,11 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ("name", "slug")
 
-    validators = [
-        UniqueTogetherValidator(
-            queryset=Category.objects.all(), fields=("name", "slug")
-        )
-    ]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Category.objects.all(), fields=("name", "slug")
+            )
+        ]
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -74,9 +74,9 @@ class TitleSerializerReadOnly(serializers.ModelSerializer):
         rating = None
         if Review.objects.filter(title_id=obj.id).exists():
             rating = (
-                Review.objects.filter(title_id=obj.id).aggregate(
-                    sum=Sum("score")
-                )["sum"]
+                Review.objects.filter(title_id=obj.id).aggregate(sum=Sum("score"))[
+                    "sum"
+                ]
                 or 0
             ) / Review.objects.filter(title_id=obj.id).count()
 
@@ -107,9 +107,7 @@ class ReviewSerializerPartialUpdate(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
-    )
+    author = serializers.SlugRelatedField(read_only=True, slug_field="username")
 
     class Meta:
         fields = ("id", "text", "author", "pub_date")
@@ -141,10 +139,3 @@ class AdminUserSerializer(serializers.ModelSerializer):
             "bio",
             "role",
         )
-
-    def validate_username(self, value):
-        if value == "me":
-            raise serializers.ValidationError(
-                'Имя пользователя "me" не разрешено.'
-            )
-        return value

@@ -19,13 +19,6 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
         )
 
-    def validate_username(self, value):
-        if value == "me":
-            raise serializers.ValidationError(
-                'Имя пользователя "me" не разрешено.'
-            )
-        return value
-
 
 class SignupSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,9 +30,7 @@ class SignupSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         if value == "me":
-            raise serializers.ValidationError(
-                'Имя пользователя "me" не разрешено.'
-            )
+            raise serializers.ValidationError('Имя пользователя "me" не разрешено.')
         return value
 
 
