@@ -71,28 +71,25 @@ class TitleSerializerReadOnly(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username", required=False
-    )
-    id = serializers.PrimaryKeyRelatedField(
-        required=False, queryset=Review.objects.all()
-    )
-    pub_date = serializers.DateTimeField(required=False)
-    extra_kwargs = {
-        "id": {"required": False},
-        "author": {"required": False},
-        "pub_date": {"required": False},
-    }
+    author = serializers.SlugRelatedField(read_only=True, slug_field="username")
 
     class Meta:
-        fields = ("id", "text", "author", "score", "pub_date")
+        fields = (
+            "id",
+            "text",
+            "author",
+            "score",
+            "pub_date",
+        )
+        read_only_fields = ("id", "author", "pub_date")
         model = Review
 
     def validate(self, data):
-        title_id = self.context["view"].kwargs["title_id"]
-        author = self.context["request"].user
-        title = get_object_or_404(Title, pk=title_id)
-        if Review.objects.filter(author=author, title=title).exists():
+        if self.context["view"].action != "create":
+            return data
+        title_id = self.context["view"].kwargs.get("title_id")
+        user = self.context["request"].user
+        if Review.objects.filter(author=user, title_id=title_id).exists():
             raise serializers.ValidationError("Нельзя оставить ревью дважды")
         return data
 
