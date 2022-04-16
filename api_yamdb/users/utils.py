@@ -14,18 +14,3 @@ def send_confirmation_code(username):
     subject = "Код подтверждения"
     message = f"{confirmation_code} - код для авторизации"
     return send_mail(subject, message, admin_email, user_email)
-
-
-"""
-def code(username):
-    user = get_object_or_404(User, username=username)
-    confirmation_code = uuid4()
-    user.confirmation_code = confirmation_code
-    send_mail(
-        "Код подтвержения для завершения регистрации",
-        f"Ваш код для получения JWT токена {user.confirmation_code}",
-        ADMIN_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
-"""

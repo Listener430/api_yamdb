@@ -1,7 +1,6 @@
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-
 from rest_framework import viewsets, filters, status
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (
@@ -87,17 +86,19 @@ class TitleViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (IsAdminModerator,)
-    pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        title = get_object_or_404(Title, id=self.kwargs["title_id"])
-        queryset = title.reviews.all()
-        return queryset
+        title = get_object_or_404(
+            Title,
+            id=self.kwargs.get("title_id"),
+        )
+        return title.reviews.all()
 
     def perform_create(self, serializer):
+        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
         serializer.save(
             author=self.request.user,
-            title=get_object_or_404(Title, id=self.kwargs["title_id"]),
+            title=title,
         )
 
 
@@ -135,16 +136,12 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def about_me(self, request):
-        serializer = UserSerializer(
-            request.user, data=request.data, partial=True
-        )
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
         if request.user.is_admin or request.user.is_moderator:
-            serializer = UserSerializer(
-                request.user, data=request.data, partial=True
-            )
+            serializer = UserSerializer(request.user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         serializer.is_valid(raise_exception=True)
-        serializer.save(role="user")
+        serializer.save(role=User.RoleChoices.USER)
         return Response(serializer.data, status=status.HTTP_200_OK)
