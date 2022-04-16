@@ -69,7 +69,9 @@ class TitleSerializerReadOnly(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field="username"
+    )
 
     class Meta:
         fields = (
@@ -93,12 +95,16 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate_year(self, value):
         if value < 1 or value > 10:
-            raise serializers.ValidationError("Оценка не может быть более 10 и менее 1")
+            raise serializers.ValidationError(
+                "Оценка не может быть более 10 и менее 1"
+            )
         return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(read_only=True, slug_field="username")
+    author = serializers.SlugRelatedField(
+        read_only=True, slug_field="username"
+    )
 
     class Meta:
         fields = ("id", "text", "author", "pub_date")
