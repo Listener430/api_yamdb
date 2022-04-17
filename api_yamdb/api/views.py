@@ -10,6 +10,8 @@ from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly,
 )
 
+from .filters import TitleFilter
+from .mixins import CreateDestroyListMixin
 from .permissions import (
     IsAdminOrReadOnly,
     IsAdminRole,
@@ -32,8 +34,6 @@ from .serializers import (
     UserSerializer,
     AdminUserSerializer,
 )
-from .filters import TitleFilter
-from .mixins import CreateDestroyListMixin
 
 
 class CategoryViewSet(CreateDestroyListMixin):
@@ -63,7 +63,7 @@ class GenreViewSet(CreateDestroyListMixin):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg("reviews__score"))
     pagination_class = LimitOffsetPagination
     permission_classes = (
         IsAuthenticatedOrReadOnly,
@@ -71,10 +71,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-
-    def get_queryset(self):
-        queryset = Title.objects.annotate(rating=Avg("reviews__score"))
-        return queryset
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
