@@ -61,22 +61,22 @@ class Title(models.Model):
 
 
 class Review(models.Model):
-    title = models.ForeignKey(
-        Title, on_delete=models.CASCADE, related_name="reviews"
-    )
+    title = models.ForeignKey(Title, on_delete=models.CASCADE, related_name="reviews")
     text = models.TextField()
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="reviews"
-    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
     score = models.IntegerField(
         validators=(
-            MinValueValidator(1),
-            MaxValueValidator(10),
+            MinValueValidator(
+                1,
+                message="оценка должна быть не меньше 1",
+            ),
+            MaxValueValidator(
+                10,
+                message="оценка должна быть не больше 10",
+            ),
         )
     )
-    pub_date = models.DateTimeField(
-        "Дата добавления", auto_now_add=True, db_index=True
-    )
+    pub_date = models.DateTimeField("Дата добавления", auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ["pub_date"]
@@ -84,9 +84,7 @@ class Review(models.Model):
         verbose_name_plural = "Отзывы"
 
         constraints = [
-            models.UniqueConstraint(
-                fields=["title", "author"], name="unique_review"
-            )
+            models.UniqueConstraint(fields=["title", "author"], name="unique_review")
         ]
 
 
@@ -95,12 +93,8 @@ class Comment(models.Model):
         Review, on_delete=models.CASCADE, related_name="comments"
     )
     text = models.TextField()
-    author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name="comments"
-    )
-    pub_date = models.DateTimeField(
-        "Дата добавления", auto_now_add=True, db_index=True
-    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
+    pub_date = models.DateTimeField("Дата добавления", auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ["pub_date"]

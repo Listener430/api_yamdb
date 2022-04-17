@@ -3,14 +3,15 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, status
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
-from rest_framework.decorators import action
-from rest_framework.response import Response
 
-
+from .filters import TitleFilter
+from .mixins import CreateDestroyListMixin
 from .permissions import (
     IsAdminOrReadOnly,
     IsAdminRole,
@@ -33,11 +34,9 @@ from .serializers import (
     UserSerializer,
     AdminUserSerializer,
 )
-from .filters import TitleFilter
-from .mixins import CustomMixins
 
 
-class CategoryViewSet(CustomMixins):
+class CategoryViewSet(CreateDestroyListMixin):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = LimitOffsetPagination
@@ -50,7 +49,7 @@ class CategoryViewSet(CustomMixins):
     lookup_field = "slug"
 
 
-class GenreViewSet(CustomMixins):
+class GenreViewSet(CreateDestroyListMixin):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     pagination_class = LimitOffsetPagination
@@ -64,7 +63,7 @@ class GenreViewSet(CustomMixins):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.annotate(rating=Avg("reviews__score"))
     pagination_class = LimitOffsetPagination
     permission_classes = (
         IsAuthenticatedOrReadOnly,
@@ -72,10 +71,6 @@ class TitleViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-
-    def get_queryset(self):
-        queryset = Title.objects.annotate(rating=Avg("reviews__score"))
-        return queryset
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
@@ -136,13 +131,9 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def about_me(self, request):
-        serializer = UserSerializer(
-            request.user, data=request.data, partial=True
-        )
+        serializer = UserSerializer(request.user, data=request.data, partial=True)
         if request.user.is_admin or request.user.is_moderator:
-            serializer = UserSerializer(
-                request.user, data=request.data, partial=True
-            )
+            serializer = UserSerializer(request.user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

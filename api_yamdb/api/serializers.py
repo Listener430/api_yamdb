@@ -1,6 +1,8 @@
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
+from users.models import User
 from reviews.models import (
     Category,
     Genre,
@@ -9,7 +11,6 @@ from reviews.models import (
     Comment,
     User,
 )
-from users.models import User
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -37,6 +38,14 @@ class TitleSerializerWriteOnly(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field="slug", queryset=Category.objects.all(), many=False
     )
+
+    def validate_year(self, value):
+        current_year = timezone.now().year
+        if not value <= current_year:
+            raise serializers.ValidationError(
+                "год должен быть не больше текущего",
+            )
+        return value
 
     class Meta:
         model = Title
@@ -69,9 +78,7 @@ class TitleSerializerReadOnly(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
-    )
+    author = serializers.SlugRelatedField(read_only=True, slug_field="username")
 
     class Meta:
         fields = (
@@ -94,17 +101,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         return data
 
     def validate_year(self, value):
-        if value < 1 or value > 10:
-            raise serializers.ValidationError(
-                "Оценка не может быть более 10 и менее 1"
-            )
+        if 1 < value < 10:
+            raise serializers.ValidationError("Оценка не может быть более 10 и менее 1")
         return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
-    )
+    author = serializers.SlugRelatedField(read_only=True, slug_field="username")
 
     class Meta:
         fields = ("id", "text", "author", "pub_date")
