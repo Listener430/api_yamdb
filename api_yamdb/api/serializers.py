@@ -113,10 +113,10 @@ class ReviewSerializer(serializers.ModelSerializer):
             )
         return data
 
-    def validate_year(self, value):
-        if 1 < value < 10:
+    def validate_score(self, value):
+        if 10 < value < 1:
             raise serializers.ValidationError(
-                "Оценка не может быть более 10 и менее 1",
+                "Оценка не может быть более 10 и менее 1"
             )
         return value
 

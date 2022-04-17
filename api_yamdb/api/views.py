@@ -3,15 +3,14 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, status
 from rest_framework.pagination import LimitOffsetPagination
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from .filters import TitleFilter
-from .mixins import CreateDestroyListMixin
+
 from .permissions import (
     IsAdminOrReadOnly,
     IsAdminRole,
@@ -34,6 +33,8 @@ from .serializers import (
     UserSerializer,
     AdminUserSerializer,
 )
+from .filters import TitleFilter
+from .mixins import CreateDestroyListMixin
 
 
 class CategoryViewSet(CreateDestroyListMixin):
@@ -73,6 +74,10 @@ class TitleViewSet(viewsets.ModelViewSet):
     )
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
+
+    def get_queryset(self):
+        queryset = Title.objects.annotate(rating=Avg("reviews__score"))
+        return queryset
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
@@ -152,7 +157,8 @@ class UserViewSet(viewsets.ModelViewSet):
                 request.user,
                 data=request.data,
                 partial=True,
-            )
+            request.user, data=request.data, partial=True
+        )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
