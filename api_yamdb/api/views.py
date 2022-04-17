@@ -157,8 +157,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 request.user,
                 data=request.data,
                 partial=True,
-            request.user, data=request.data, partial=True
-        )
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(
