@@ -20,7 +20,11 @@ class CategorySerializer(serializers.ModelSerializer):
 
         validators = [
             UniqueTogetherValidator(
-                queryset=Category.objects.all(), fields=("name", "slug")
+                queryset=Category.objects.all(),
+                fields=(
+                    "name",
+                    "slug",
+                ),
             )
         ]
 
@@ -33,10 +37,14 @@ class GenreSerializer(serializers.ModelSerializer):
 
 class TitleSerializerWriteOnly(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
-        slug_field="slug", queryset=Genre.objects.all(), many=True
+        slug_field="slug",
+        queryset=Genre.objects.all(),
+        many=True,
     )
     category = serializers.SlugRelatedField(
-        slug_field="slug", queryset=Category.objects.all(), many=False
+        slug_field="slug",
+        queryset=Category.objects.all(),
+        many=False,
     )
 
     def validate_year(self, value):
@@ -79,7 +87,8 @@ class TitleSerializerReadOnly(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
+        read_only=True,
+        slug_field="username",
     )
 
     class Meta:
@@ -99,7 +108,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         title_id = self.context["view"].kwargs.get("title_id")
         user = self.context["request"].user
         if Review.objects.filter(author=user, title_id=title_id).exists():
-            raise serializers.ValidationError("Нельзя оставить ревью дважды")
+            raise serializers.ValidationError(
+                "Нельзя оставить ревью дважды",
+            )
         return data
 
     def validate_score(self, value):
@@ -112,7 +123,8 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
-        read_only=True, slug_field="username"
+        read_only=True,
+        slug_field="username",
     )
 
     class Meta:
