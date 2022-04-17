@@ -63,7 +63,9 @@ class GenreViewSet(CreateDestroyListMixin):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.annotate(rating=Avg("reviews__score"))
+    queryset = Title.objects.annotate(
+        rating=Avg("reviews__score"),
+    )
     pagination_class = LimitOffsetPagination
     permission_classes = (
         IsAuthenticatedOrReadOnly,
@@ -90,7 +92,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return title.reviews.all()
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, id=self.kwargs.get("title_id"))
+        title = get_object_or_404(
+            Title,
+            id=self.kwargs.get("title_id"),
+        )
         serializer.save(
             author=self.request.user,
             title=title,
@@ -103,14 +108,20 @@ class CommentViewSet(viewsets.ModelViewSet):
     pagination_class = LimitOffsetPagination
 
     def get_queryset(self):
-        review = get_object_or_404(Review, id=self.kwargs["review_id"])
+        review = get_object_or_404(
+            Review,
+            id=self.kwargs["review_id"],
+        )
         queryset = review.comments.all()
         return queryset
 
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            review=get_object_or_404(Review, id=self.kwargs["review_id"]),
+            review=get_object_or_404(
+                Review,
+                id=self.kwargs["review_id"],
+            ),
         )
 
 
@@ -131,12 +142,26 @@ class UserViewSet(viewsets.ModelViewSet):
         permission_classes=(IsAuthenticated,),
     )
     def about_me(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
+        serializer = UserSerializer(
+            request.user,
+            data=request.data,
+            partial=True,
+        )
         if request.user.is_admin or request.user.is_moderator:
-            serializer = UserSerializer(request.user, data=request.data, partial=True)
+            serializer = UserSerializer(
+                request.user,
+                data=request.data,
+                partial=True,
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK,
+            )
         serializer.is_valid(raise_exception=True)
         serializer.save(role=User.RoleChoices.USER)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )

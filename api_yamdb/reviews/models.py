@@ -40,7 +40,10 @@ class Title(models.Model):
         null=True,
         validators=(validate_year,),
     )
-    genre = models.ManyToManyField(Genre, related_name="titles")
+    genre = models.ManyToManyField(
+        Genre,
+        related_name="titles",
+    )
     category = models.ForeignKey(
         Category,
         blank=True,
@@ -61,9 +64,17 @@ class Title(models.Model):
 
 
 class Review(models.Model):
-    title = models.ForeignKey(Title, on_delete=models.CASCADE, related_name="reviews")
+    title = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
     text = models.TextField()
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
     score = models.IntegerField(
         validators=(
             MinValueValidator(
@@ -76,7 +87,11 @@ class Review(models.Model):
             ),
         )
     )
-    pub_date = models.DateTimeField("Дата добавления", auto_now_add=True, db_index=True)
+    pub_date = models.DateTimeField(
+        "Дата добавления",
+        auto_now_add=True,
+        db_index=True,
+    )
 
     class Meta:
         ordering = ["pub_date"]
@@ -84,17 +99,30 @@ class Review(models.Model):
         verbose_name_plural = "Отзывы"
 
         constraints = [
-            models.UniqueConstraint(fields=["title", "author"], name="unique_review")
+            models.UniqueConstraint(
+                fields=["title", "author"],
+                name="unique_review",
+            )
         ]
 
 
 class Comment(models.Model):
     review = models.ForeignKey(
-        Review, on_delete=models.CASCADE, related_name="comments"
+        Review,
+        on_delete=models.CASCADE,
+        related_name="comments",
     )
     text = models.TextField()
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
-    pub_date = models.DateTimeField("Дата добавления", auto_now_add=True, db_index=True)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+    pub_date = models.DateTimeField(
+        "Дата добавления",
+        auto_now_add=True,
+        db_index=True,
+    )
 
     class Meta:
         ordering = ["pub_date"]
