@@ -103,14 +103,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         model = Review
 
     def validate(self, data):
-        if self.context["view"].action != "create":
-            return data
         title_id = self.context["view"].kwargs.get("title_id")
         user = self.context["request"].user
         if Review.objects.filter(author=user, title_id=title_id).exists():
-            raise serializers.ValidationError(
-                "Нельзя оставить ревью дважды",
-            )
+            if self.context["request"].method in ["POST"]:
+                raise serializers.ValidationError(
+                    "Нельзя оставить ревью дважды",
+                )
         return data
 
     def validate_score(self, value):
