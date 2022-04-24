@@ -28,7 +28,7 @@ class Command(BaseCommand):
                 id = _object_dict.get("id")
                 try:
                     obj = _model.objects.get(pk=id)
-                    print("запись уже существует", obj)
+                    print("запись уже существует!", obj)
                     continue
                 except _model.DoesNotExist:
                     try:
